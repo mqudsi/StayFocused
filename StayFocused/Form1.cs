@@ -1,9 +1,10 @@
-﻿//#define TESTMODE
+//#define TESTMODE
 
 using System;
 using System.ComponentModel;
 using System.Windows.Forms;
 using System.Diagnostics;
+using System.Drawing;
 
 namespace StayFocused
 {
@@ -13,7 +14,7 @@ namespace StayFocused
         uint ownPid;
 
         Config config;
-        
+
         static Form1 instance;
 
         delegate void LogCallback (params object[] entries);
@@ -126,23 +127,24 @@ namespace StayFocused
         NotifyIcon trayIcon;
         bool minimizeOnClose = true;
 
-        void InitTrayIcon () {
+        void InitTrayIcon()
+        {
             ComponentResourceManager resources = new ComponentResourceManager(GetType());
 
-            var trayMenu = new ContextMenu();
-            var openItem = new MenuItem("Open", OnOpenClicked);
-            openItem.DefaultItem = true;
-            trayMenu.MenuItems.Add(openItem);
-            trayMenu.MenuItems.Add("Exit", OnExitClicked);
+            var trayMenu = new ContextMenuStrip();
+            var openItem = new ToolStripMenuItem("Open", null, OnOpenClicked);
+            trayMenu.Items.Add(openItem);
+            trayMenu.Items.Add("Exit", null, OnExitClicked);
 
-            trayIcon = new NotifyIcon();
-            trayIcon.Text = Text;
-            trayIcon.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
+            trayIcon = new NotifyIcon
+            {
+                Text = Text,
+                Icon = ((Icon)(resources.GetObject("$this.Icon"))),
+                Visible = true,
+                ContextMenuStrip = trayMenu
+            };
 
             trayIcon.Click += OnOpenClicked;
-
-            trayIcon.ContextMenu = trayMenu;
-            trayIcon.Visible = true;
 
             FormClosing += OnFormClosing;
             KeyPress += OnKeyPress;
