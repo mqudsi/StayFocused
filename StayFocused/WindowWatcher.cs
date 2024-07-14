@@ -1,5 +1,6 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
+using System.Configuration;
 using System.Diagnostics;
 using System.Linq;
 using System.Runtime.InteropServices;
@@ -35,11 +36,12 @@ namespace StayFocused
         }
 
         void ProcessCurrentProcesses () {
-            foreach (var proc in Process.GetProcesses()) {
-                if (activeProcesses.Contains(proc.Id)) return;
-
-                activeProcesses.Add(proc.Id);
-                onProcessStarted(proc);
+            var processes = Process.GetProcesses();
+            activeProcesses.EnsureCapacity(processes.Length);
+            foreach (var proc in processes) {
+                if (activeProcesses.Add(proc.Id)) {
+                    onProcessStarted(proc);
+                }
             }
         }
 
@@ -51,16 +53,17 @@ namespace StayFocused
                 GetWindowThreadProcessId(hwnd, out uintPid);
                 int pid = (int)uintPid;
 
-                if (activeProcesses.Contains(pid)) return;
-                activeProcesses.Add(pid);
-
-                onProcessStarted(Process.GetProcessById(pid));
+                if (activeProcesses.Add(pid))
+                {
+                    onProcessStarted(Process.GetProcessById(pid));
+                }
             }
         }
 
         void PruneDeadPids () {
-            var currentProcesses = new HashSet<int>();
-            foreach (var proc in Process.GetProcesses()) {
+            var processes = Process.GetProcesses();
+            var currentProcesses = new HashSet<int>(processes.Length);
+            foreach (var proc in processes) {
                 currentProcesses.Add(proc.Id);
             }
 
@@ -70,7 +73,7 @@ namespace StayFocused
                 }
             }
 
-            activeProcesses = new HashSet<int>(activeProcesses.Where((pid) => currentProcesses.Contains(pid)));
+            activeProcesses.IntersectWith(currentProcesses);
         }
 
         #region IDisposable pattern implementation
